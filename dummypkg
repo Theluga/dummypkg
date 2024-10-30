@@ -2,7 +2,7 @@
 
 ###########
 #####
-##       Dummypkg v0.1
+##       Dummypkg v0.2
 #####
 ###########
 
@@ -14,27 +14,23 @@ function install(){
     if [ -d ~/.dummybuild-tmp/$PACKAGE ]; then
        rm -r ~/.dummybuild-tmp/$PACKAGE 
     fi
+    sudo mkdir -p /etc/dummy 
     
     mkdir -p ~/.dummybuild-tmp/$PACKAGE
     echo "pkgname=$PACKAGE" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
     echo "pkgver=$PKGVER" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
     echo "pkgrel=1" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
     echo "pkgdesc=\"Dummy package created by dummypkg\"" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-    echo "arch=('i686' 'x86_64')" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-    echo "url=""" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-    echo "license=\"GPL\"" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-    echo "depends=()" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-    echo "source=()" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-    echo "build(){" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-    echo "mkdir -p ~/.dummybuild-tmp/$PACKAGE/pkg/etc/dummy" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-    echo "echo >> \"Installed by dummypkg\" >> ~/.dummybuild-tmp/$PACKAGE/pkg/etc/dummy/$PACKAGE-$PKGVER" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-    echo "}" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
+    echo "arch=(any)" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
+    echo "provides=($PACKAGE=$PKGVER)" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
+    
     
     cd ~/.dummybuild-tmp/$PACKAGE/
     makepkg || exit 1
-    sudo pacman -U *pkg.tar.gz
-    cd ~
-    rm -r .dummybuild-tmp/
+    if sudo pacman -U $(ls ~/.dummybuild-tmp/$PACKAGE/*pkg.tar.zst) ; then
+		sudo touch >> sudo /etc/dummy/$PACKAGE
+	fi
+    rm -r ~/.dummybuild-tmp/
     exit 0
 }
 
