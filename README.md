@@ -6,9 +6,9 @@ Originally from https://bbs.archlinux.org/viewtopic.php?id=61001 by user Themais
 This version tries to improve a little with newer pacman.
 
 Usage:
-dummypkg -S <package> <version> # Installs dummypkg
-dummypkg -R <package> # removes it
-dummypkg -l # lists all packages installed by dummypkg
-dummypkg -h # shows help page
+- `dummypkg -S <package> <version>` Installs a dummy package.
+- `dummypkg -R <package>` Removes the dummy package.
+- `dummypkg -l` Lists all dummy packages installed.
+- `dummypkg -h` Shows the help page.
 
 Place this file with execution permission on your path (like /usr/bin).
