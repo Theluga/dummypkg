@@ -7,9 +7,8 @@ This version tries to improve a little with newer pacman.
 
 Usage:
 dummypkg -S <package> <version> # Installs dummypkg
-dummypkg -R <package> #removes it
-dummypkg -l #lists all packages installed by dummypkg
+dummypkg -R <package> # removes it
+dummypkg -l # lists all packages installed by dummypkg
+dummypkg -h # shows help page
 
 Place this file with execution permission on your path (like /usr/bin).
-
-If you delete this script, remeber to delete /etc/dummy folder.
