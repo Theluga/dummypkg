@@ -6,7 +6,7 @@
 #####
 ###########
 
-DUMMYVERSION="0.4"
+DUMMYVERSION="0.5"
 
 ## Script to install dummy packages in pacman
 ## Use at own risk!
@@ -34,7 +34,7 @@ arch=(any)
 provides=($PACKAGE=$PKGVER)
 
 package() {
-	install -Dm644 /dev/null "\$pkgdir/etc/dummy/\$pkgname"
+	install -Dm644 /dev/null "\$pkgdir/usr/share/dummypkg/\$pkgname"
 }
 EOF
 
@@ -68,7 +68,7 @@ function remove(){
 	fi
 
 	# Check whether package is registered as a dummy package
-	if [ ! -e "/etc/dummy/$RPACKAGE" ]; then
+	if [ ! -e "/usr/share/dummypkg/$RPACKAGE" ]; then
 		echo "'$RPACKAGE' is not a dummy package."
 		exit 1
 	fi
@@ -81,7 +81,11 @@ function remove(){
 
 
 function list(){
-	for file in `ls /etc/dummy -1`
+	if [ ! -d /usr/share/dummypkg ]; then
+		exit 0
+	fi
+
+	for file in `ls /usr/share/dummypkg -1`
 	do
 		echo "$(pacman -Q $file)"
 	done
