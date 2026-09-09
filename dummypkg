@@ -2,120 +2,192 @@
 
 ###########
 #####
-#	Dummypkg v0.3
+#   Dummypkg
 #####
 ###########
 
-## Script to install dummy packages in pacman
+DUMMYVERSION="0.4"
 
+## Script to install dummy packages in pacman
 ## Use at own risk!
+
+TMPDIR="/tmp/dummy-temp"
+
 
 function install(){
 
-	if [ -d ~/.dummybuild-tmp/$PACKAGE ]; then
-		rm -r ~/.dummybuild-tmp/$PACKAGE 
+	# Remove previous temporary build directory for this package
+	if [ -d "$TMPDIR/$PACKAGE" ]; then
+		rm -rf "$TMPDIR/$PACKAGE"
 	fi
 
-	sudo mkdir -p /etc/dummy 
-	mkdir -p ~/.dummybuild-tmp/$PACKAGE
+	# Create temporary build directory
+	mkdir -p "$TMPDIR/$PACKAGE" || exit 1
 
-	echo "pkgname=$PACKAGE" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-	echo "pkgver=$PKGVER" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-	echo "pkgrel=1" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-	echo "pkgdesc=\"Dummy package created by dummypkg\"" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-	echo "arch=(any)" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
-	echo "provides=($PACKAGE=$PKGVER)" >> ~/.dummybuild-tmp/$PACKAGE/PKGBUILD
+	# Generate PKGBUILD
+	cat > "$TMPDIR/$PACKAGE/PKGBUILD" <<EOF
+pkgname=$PACKAGE
+pkgver=$PKGVER
+pkgrel=1
+pkgdesc="Dummy package created by dummypkg"
+arch=(any)
+provides=($PACKAGE=$PKGVER)
 
-	cd ~/.dummybuild-tmp/$PACKAGE/
-	makepkg || exit 1
+package() {
+	install -Dm644 /dev/null "\$pkgdir/etc/dummy/\$pkgname"
+}
+EOF
 
-	if sudo pacman -U $(ls ~/.dummybuild-tmp/$PACKAGE/*pkg.tar.zst) ; then
-		sudo touch /etc/dummy/$PACKAGE
-	fi
+	# Enter build directory
+	cd "$TMPDIR/$PACKAGE/" || exit 1
 
-	rm -r ~/.dummybuild-tmp/
+	# Build package
+	makepkg || {
+		rm -rf "$TMPDIR/$PACKAGE"
+		exit 1
+	}
+
+	# Install package
+	sudo pacman -U "$TMPDIR/$PACKAGE"/*pkg.tar.zst || {
+		rm -rf "$TMPDIR/$PACKAGE"
+		exit 1
+	}
+
+	# Remove temporary files
+	rm -rf "$TMPDIR/$PACKAGE"
+
 	exit 0
 }
 
 function remove(){
-	if [ -e /etc/dummy/$RPACKAGE* ]; then
-		sudo rm /etc/dummy/$RPACKAGE
-		sudo pacman -R $RPACKAGE
-	else
-		echo "This package is not installed by dummypkg ... Exiting"
+
+	# Check whether package is installed
+	if ! pacman -Q "$RPACKAGE" >/dev/null 2>&1; then
+		echo "'$RPACKAGE' is not installed."
 		exit 1
 	fi
+
+	# Check whether package is registered as a dummy package
+	if [ ! -e "/etc/dummy/$RPACKAGE" ]; then
+		echo "'$RPACKAGE' is not a dummy package."
+		exit 1
+	fi
+
+	# Remove package and its files through pacman
+	sudo pacman -R "$RPACKAGE"
 
 	exit 0
 }
 
+
 function list(){
 	for file in `ls /etc/dummy -1`
 	do
-		echo ">> $file"
+		echo "$(pacman -Q $file)"
 	done
 
 	exit 0
 }
 
+
 function usage(){
-	echo "usage: info [[--install] [--list] [--help] [--remove] [--version]]"
+	echo "Version $DUMMYVERSION"
+	echo "usage: dummypkg [[--install] [--list] [--help] [--remove]]"
+	echo
+	echo "Options:"
+	echo "  -S, --install PACKAGE VERSION   Install a dummy package"
+	echo "  -R, --remove PACKAGE            Remove a dummy package"
+	echo "  -l, --list                      List installed dummy packages"
+	echo "  -h, --help                      Show this help"
+
 	exit 0
 }
+
 
 INSTALL=0
 REMOVE=0
 LIST=0
 
+
 if [ "$1" = "" ]; then
-	usage ; exit 1
+	usage
+	exit 1
 fi
 
+
 while [ "$1" != "" ]; do
-	case $1 in
+
+	case "$1" in
 
 		-S | --install )
-			INSTALL=1 
+
+			INSTALL=1
 			PACKAGE="$2"
 			PKGVER="$3"
-			if [ "$2" = "" ]; then
+
+			if [ -z "$PACKAGE" ]; then
 				echo "--install requires a package name"
 				exit 1
 			fi
-			if [ "$3" = "" ]; then
+
+			if [ -z "$PKGVER" ]; then
 				echo "--install requires a package version"
 				exit 1
 			fi
+
 			shift
 			shift
 			;;
 
-		-R | --remove )	
-				REMOVE=1 
-				RPACKAGE="$2"
-				if [ "$2" = "" ]; then
-					echo "--remove requires a package name"
-					exit 1
-				fi
-				shift 
-				;;
 
-		-h | --help )	usage; exit 0 ;;
+		-R | --remove )
 
-		-l | --list )	LIST=1 ;;
+			REMOVE=1
+			RPACKAGE="$2"
 
-		* )	usage ; exit 1 
+			if [ -z "$RPACKAGE" ]; then
+				echo "--remove requires a package name"
+				exit 1
+			fi
+
+			shift
+			;;
+
+
+		-h | --help )
+
+			usage
+			exit 0
+			;;
+
+
+		-l | --list )
+
+			LIST=1
+			;;
+
+
+		* )
+
+			usage
+			exit 1
+			;;
 
 	esac
+
 	shift
+
 done
 
-if [ $INSTALL = 1 ]; then
+
+if [ "$INSTALL" = 1 ]; then
 	install
 fi
-if [ $REMOVE = 1 ]; then
+
+if [ "$REMOVE" = 1 ]; then
 	remove
 fi
-if [ $LIST = 1 ]; then
+
+if [ "$LIST" = 1 ]; then
 	list
 fi
