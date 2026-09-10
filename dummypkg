@@ -6,12 +6,32 @@
 #####
 ###########
 
-DUMMYVERSION="0.5"
+DUMMYVERSION="0.6"
 
 ## Script to install dummy packages in pacman
 ## Use at own risk!
 
 TMPDIR="/tmp/dummy-temp"
+
+# I want to be privilege-elevation agnostic.
+function elevate() {
+	if [ "$EUID" -eq 0 ]; then
+		"$@"
+	elif command -v sudo >/dev/null 2>&1; then
+		sudo "$@"
+	elif command -v doas >/dev/null 2>&1; then
+		doas "$@"
+	elif command -v run0 >/dev/null 2>&1; then
+		run0 "$@"
+	elif command -v su >/dev/null 2>&1; then
+		echo "Root"
+		su -c "$(printf '%q ' "$@")"
+	else
+		echo "Error: no privilege escalation tool found."
+		echo "Please install sudo, doas, or run0."
+		exit 1
+	fi
+}
 
 
 function install(){
@@ -48,7 +68,7 @@ EOF
 	}
 
 	# Install package
-	sudo pacman -U "$TMPDIR/$PACKAGE"/*pkg.tar.zst || {
+	elevate pacman -U "$TMPDIR/$PACKAGE"/*pkg.tar.zst || {
 		rm -rf "$TMPDIR/$PACKAGE"
 		exit 1
 	}
@@ -74,7 +94,7 @@ function remove(){
 	fi
 
 	# Remove package and its files through pacman
-	sudo pacman -R "$RPACKAGE"
+	elevate pacman -R "$RPACKAGE"
 
 	exit 0
 }
