@@ -28,7 +28,7 @@ function elevate() {
 		su -c "$(printf '%q ' "$@")"
 	else
 		echo "Error: no privilege escalation tool found."
-		echo "Please install sudo, doas, or run0."
+		echo "Supported tools: sudo, doas, run0 or su."
 		exit 1
 	fi
 }
@@ -151,6 +151,12 @@ while [ "$1" != "" ]; do
 
 			if [ -z "$PACKAGE" ]; then
 				echo "--install requires a package name"
+				exit 1
+			fi
+
+			if [[ ! "$PACKAGE" =~ ^[a-zA-Z0-9@._+:-]+$ ]]; then
+				echo "Invalid package name: '$PACKAGE'"
+				echo "Package names may only contain letters, numbers, @, ., _, +, :, and -."
 				exit 1
 			fi
 
