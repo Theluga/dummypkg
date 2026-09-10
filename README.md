@@ -11,6 +11,6 @@ Usage:
 - `dummypkg -l` Lists all dummy packages installed.
 - `dummypkg -h` Shows the help page.
 
-Place this file with execution permission on your path (like /usr/bin).
+dummypkg requires access to a privilege-escalation mechanism. It automatically detects sudo, doas, run0, or su. At least one must be available and configured.
 ________________________________________
 ## License is pending approval by the creator. My changes are GPL V3 or later if possible.
