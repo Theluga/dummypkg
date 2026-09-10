@@ -1,6 +1,6 @@
 pkgbase = dummypkg-git
 	pkgdesc = A utility to generate and install dummy packages in pacman
-	pkgver = r14.g68b5b88
+	pkgver = r16.gcf71c49
 	pkgrel = 1
 	url = https://github.com/Theluga/dummypkg
 	arch = any
@@ -10,8 +10,8 @@ pkgbase = dummypkg-git
 	depends = pacman
 	optdepends = sudo: privilege escalation
 	optdepends = doas: privilege escalation
-	optdepends = systemd: provides run0 privilege escalation
-	provides = dummypkg
+	optdepends = systemd: run0 privilege escalation
+	provides = dummypkg=r16.gcf71c49
 	conflicts = dummypkg
 	source = git+https://github.com/Theluga/dummypkg.git
 	sha256sums = SKIP

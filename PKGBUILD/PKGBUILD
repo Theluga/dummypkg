@@ -1,7 +1,7 @@
 # Maintainer: Theluga
 
 pkgname=dummypkg-git
-pkgver=r14.g68b5b88
+pkgver=r16.gcf71c49
 pkgrel=1
 pkgdesc="A utility to generate and install dummy packages in pacman"
 arch=('any')
@@ -13,12 +13,12 @@ depends=('bash' 'pacman')
 optdepends=(
 	'sudo: privilege escalation'
 	'doas: privilege escalation'
-	'systemd: provides run0 privilege escalation'
+	'systemd: run0 privilege escalation'
 )
 
 makedepends=('git')
 
-provides=('dummypkg')
+provides=("dummypkg=${pkgver}")
 conflicts=('dummypkg')
 
 source=("git+$url.git")
@@ -37,3 +37,4 @@ package() {
 		"$srcdir/dummypkg/dummypkg" \
 		"$pkgdir/usr/bin/dummypkg"
 }
+
