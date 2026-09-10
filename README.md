@@ -12,3 +12,5 @@ Usage:
 - `dummypkg -h` Shows the help page.
 
 Place this file with execution permission on your path (like /usr/bin).
+________________________________________
+## License is pending approval by the creator. My changes are GPL V3 or later if possible.
