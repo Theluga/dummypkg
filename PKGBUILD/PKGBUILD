@@ -1,7 +1,7 @@
 # Maintainer: Theluga
 
 pkgname=dummypkg-git
-pkgver=r16.gcf71c49
+pkgver=r17.g23db9cd
 pkgrel=1
 pkgdesc="A utility to generate and install dummy packages in pacman"
 arch=('any')

@@ -6,12 +6,12 @@
 #####
 ###########
 
-DUMMYVERSION="0.6"
+DUMMYVERSION="0.7"
 
 ## Script to install dummy packages in pacman
 ## Use at own risk!
 
-TMPDIR="/tmp/dummy-temp"
+TMPDIR=""
 
 # I want to be privilege-elevation agnostic.
 function elevate() {
@@ -33,9 +33,17 @@ function elevate() {
 	fi
 }
 
+warn() {
+	# \033[1;33m sets text color to Bold Yellow, \033[0m resets it back to normal
+	echo -e "\033[1;33m[WARNING]: $*\033[0m" >&2
+}
 
-function install(){
+function install() {
 
+	TMPDIR=$(mktemp -d) || {
+		echo "Error: could not create temporary directory."
+		exit 1
+	}
 	# Remove previous temporary build directory for this package
 	if [ -d "$TMPDIR/$PACKAGE" ]; then
 		rm -rf "$TMPDIR/$PACKAGE"
@@ -45,10 +53,10 @@ function install(){
 	mkdir -p "$TMPDIR/$PACKAGE" || exit 1
 
 	# Generate PKGBUILD
-	cat > "$TMPDIR/$PACKAGE/PKGBUILD" <<EOF
+	cat >"$TMPDIR/$PACKAGE/PKGBUILD" <<EOF
 pkgname=$PACKAGE
 pkgver=$PKGVER
-pkgrel=1
+pkgrel=$PKGREL
 pkgdesc="Dummy package created by dummypkg"
 arch=(any)
 provides=($PACKAGE=$PKGVER)
@@ -79,7 +87,7 @@ EOF
 	exit 0
 }
 
-function remove(){
+function remove() {
 
 	# Check whether package is installed
 	if ! pacman -Q "$RPACKAGE" >/dev/null 2>&1; then
@@ -99,27 +107,26 @@ function remove(){
 	exit 0
 }
 
-
-function list(){
+function list() {
 	if [ ! -d /usr/share/dummypkg ]; then
+		warn "There is no dummy package."
 		exit 0
 	fi
 
-	for file in `ls /usr/share/dummypkg -1`
-	do
-		echo "$(pacman -Q $file)"
+	for file in /usr/share/dummypkg/*; do
+		filename=$(basename "$file")
+		echo "$(pacman -Q $filename)"
 	done
 
 	exit 0
 }
 
-
-function usage(){
+function usage() {
 	echo "Version $DUMMYVERSION"
 	echo "usage: dummypkg [[--install] [--list] [--help] [--remove]]"
 	echo
 	echo "Options:"
-	echo "  -S, --install PACKAGE VERSION   Install a dummy package"
+	echo "  -S, --install PACKAGE VERSION[-RELEASE]   Install a dummy package"
 	echo "  -R, --remove PACKAGE            Remove a dummy package"
 	echo "  -l, --list                      List installed dummy packages"
 	echo "  -h, --help                      Show this help"
@@ -127,88 +134,91 @@ function usage(){
 	exit 0
 }
 
-
 INSTALL=0
 REMOVE=0
 LIST=0
-
 
 if [ "$1" = "" ]; then
 	usage
 	exit 1
 fi
 
-
 while [ "$1" != "" ]; do
 
 	case "$1" in
 
-		-S | --install )
+	-S | --install)
 
-			INSTALL=1
-			PACKAGE="$2"
-			PKGVER="$3"
+		INSTALL=1
+		PACKAGE="$2"
+		PKGVER="$3"
+		PKGREL=1
 
-			if [ -z "$PACKAGE" ]; then
-				echo "--install requires a package name"
+		if [[ "$PKGVER" == *-* ]]; then
+			PKGREL="${PKGVER##*-}"
+			PKGVER="${PKGVER%-*}"
+
+			if [[ ! "$PKGREL" =~ ^[0-9]+$ ]]; then
+				echo "Invalid package release number: '$PKGREL'. It must be an integer"
 				exit 1
 			fi
+		fi
 
-			if [[ ! "$PACKAGE" =~ ^[a-zA-Z0-9@._+:-]+$ ]]; then
-				echo "Invalid package name: '$PACKAGE'"
-				echo "Package names may only contain letters, numbers, @, ., _, +, :, and -."
-				exit 1
-			fi
-
-			if [ -z "$PKGVER" ]; then
-				echo "--install requires a package version"
-				exit 1
-			fi
-
-			shift
-			shift
-			;;
-
-
-		-R | --remove )
-
-			REMOVE=1
-			RPACKAGE="$2"
-
-			if [ -z "$RPACKAGE" ]; then
-				echo "--remove requires a package name"
-				exit 1
-			fi
-
-			shift
-			;;
-
-
-		-h | --help )
-
-			usage
-			exit 0
-			;;
-
-
-		-l | --list )
-
-			LIST=1
-			;;
-
-
-		* )
-
-			usage
+		if [ -z "$PACKAGE" ]; then
+			echo "--install requires a package name"
 			exit 1
-			;;
+		fi
+
+		if [[ ! "$PACKAGE" =~ ^[a-zA-Z0-9@._+:-]+$ ]]; then
+			echo "Invalid package name: '$PACKAGE'"
+			echo "Package names may only contain letters, numbers, @, ., _, +, :, and -."
+			exit 1
+		fi
+
+		if [ -z "$PKGVER" ]; then
+			echo "--install requires a package version"
+			exit 1
+		fi
+
+		shift
+		shift
+		;;
+
+	-R | --remove)
+
+		REMOVE=1
+		RPACKAGE="$2"
+
+		if [ -z "$RPACKAGE" ]; then
+			echo "--remove requires a package name"
+			exit 1
+		fi
+
+		shift
+		;;
+
+	-h | --help)
+
+		usage
+		exit 0
+		;;
+
+	-l | --list)
+
+		LIST=1
+		;;
+
+	*)
+
+		usage
+		exit 1
+		;;
 
 	esac
 
 	shift
 
 done
-
 
 if [ "$INSTALL" = 1 ]; then
 	install
